@@ -23,6 +23,7 @@ class UserSeeder extends Seeder
             'name' => 'Admin',
             'email' => 'admin@gmail.com',
             'password' => Hash::make('q1w2e3r4'),
+            'is_active' => 1,
         ]);
 
         // $user->syncRoles(['admin']);
