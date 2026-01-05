@@ -1,52 +1,40 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
-use App\Models\User;
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Brand;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class BrandPolicy
 {
     use HandlesAuthorization;
-
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
+    
+    public function viewAny(AuthUser $authUser): bool
     {
-        return $user->can('view_any_brands::brand');
+        return $authUser->can('ViewAny:Brand');
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user, Brand $brand): bool
+    public function view(AuthUser $authUser, Brand $brand): bool
     {
-        return $user->can('view_brands::brand');
+        return $authUser->can('View:Brand');
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
+    public function create(AuthUser $authUser): bool
     {
-        return $user->can('create_brands::brand');
+        return $authUser->can('Create:Brand');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, Brand $brand): bool
+    public function update(AuthUser $authUser, Brand $brand): bool
     {
-        return $user->can('update_brands::brand');
+        return $authUser->can('Update:Brand');
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, Brand $brand): bool
+    public function delete(AuthUser $authUser, Brand $brand): bool
     {
-        return $user->can('delete_brands::brand');
+        return $authUser->can('Delete:Brand');
     }
+
 }
