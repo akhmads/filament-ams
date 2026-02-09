@@ -19,7 +19,10 @@ class AssetsTable
     {
         return $table
             ->columns([
-                ImageColumn::make('image'),
+                ImageColumn::make('image')
+                    ->imageHeight(40)
+                    ->defaultImageUrl(url('storage/default-image.png'))
+                    ->square(),
                 TextColumn::make('code')
                     ->searchable(),
                 TextColumn::make('name')
