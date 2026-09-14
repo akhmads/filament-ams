@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DepreciationMethod;
+use App\Enums\FiscalAssetGroup;
 use App\Models\Concerns\HasTreePath;
 use Database\Factories\AssetCategoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,6 +22,9 @@ class AssetCategory extends Model
     protected $fillable = [
         'parent_id', 'code', 'prefix', 'name', 'description',
         'depreciation_method', 'useful_life_months', 'residual_percent',
+        'fiscal_group', 'fiscal_method',
+        'expense_account_code', 'expense_account_name',
+        'accumulated_account_code', 'accumulated_account_name',
         'is_depreciable', 'requires_maintenance', 'spec_fields', 'is_active',
     ];
 
@@ -28,6 +32,8 @@ class AssetCategory extends Model
     {
         return [
             'depreciation_method' => DepreciationMethod::class,
+            'fiscal_group' => FiscalAssetGroup::class,
+            'fiscal_method' => DepreciationMethod::class,
             'residual_percent' => 'decimal:2',
             'is_depreciable' => 'boolean',
             'requires_maintenance' => 'boolean',

@@ -55,8 +55,13 @@ class AssetInfolist
                     ->schema([
                         Grid::make(4)->schema([
                             TextEntry::make('depreciation_method')->label('Depreciation Method')->badge(),
-                            TextEntry::make('useful_life_months')->label('Useful Life')->suffix(' bulan'),
+                            TextEntry::make('useful_life_months')->label('Useful Life')->suffix(' months'),
                             TextEntry::make('residual_value')->label('Residual Value')->money('IDR'),
+                            TextEntry::make('fiscal_group')->label('Tax Asset Group')->badge()
+                                ->placeholder(fn ($record): string => $record->category?->fiscal_group
+                                    ? 'From category: '.$record->category->fiscal_group->getLabel()
+                                    : 'Not set'),
+                            TextEntry::make('fiscal_method')->label('Tax Method')->badge(),
                             TextEntry::make('depreciation_start_date')->label('Depr. Start')->date('d M Y')->placeholder('—'),
                             TextEntry::make('warranty_start')->label('Warranty Starts')->date('d M Y')->placeholder('—'),
                             TextEntry::make('warranty_end')

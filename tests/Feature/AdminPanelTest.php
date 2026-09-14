@@ -13,8 +13,10 @@ use App\Filament\Resources\Departments\DepartmentResource;
 use App\Filament\Resources\Employees\EmployeeResource;
 use App\Filament\Resources\LabelTemplates\LabelTemplateResource;
 use App\Filament\Resources\Locations\LocationResource;
+use App\Filament\Resources\MaintenancePlans\MaintenancePlanResource;
 use App\Filament\Resources\Suppliers\SupplierResource;
 use App\Filament\Resources\Users\UserResource;
+use App\Filament\Resources\WorkOrders\WorkOrderResource;
 use App\Models\Asset;
 use App\Models\AssetAssignment;
 use App\Models\AssetCategory;
@@ -22,7 +24,9 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Location;
 use App\Models\User;
+use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Database\Seeders\RoleSeeder;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -60,6 +64,8 @@ class AdminPanelTest extends TestCase
             'asset models' => [AssetModelResource::class],
             'suppliers' => [SupplierResource::class],
             'label templates' => [LabelTemplateResource::class],
+            'maintenance plans' => [MaintenancePlanResource::class],
+            'work orders' => [WorkOrderResource::class],
             'users' => [UserResource::class],
         ];
     }
@@ -207,11 +213,21 @@ class AdminPanelTest extends TestCase
         ]);
     }
 
+    public function test_roles_are_listed_under_settings_right_after_users(): void
+    {
+        Filament::setCurrentPanel('admin');
+
+        $this->assertSame('Settings', RoleResource::getNavigationGroup());
+        $this->assertGreaterThan(UserResource::getNavigationSort(), RoleResource::getNavigationSort());
+        $this->assertLessThan(LabelTemplateResource::getNavigationSort(), RoleResource::getNavigationSort());
+    }
+
     public function test_the_settings_page_renders(): void
     {
         $this->actingAs($this->admin)
             ->get(ManageSettings::getUrl())
-            ->assertSuccessful();
+            ->assertSuccessful()
+            ->assertSee('Save Settings');
     }
 
     public function test_an_inactive_user_cannot_reach_the_panel(): void

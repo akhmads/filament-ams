@@ -5,6 +5,8 @@ namespace App\Filament\Resources\Assets\Schemas;
 use App\Enums\AssetCondition;
 use App\Enums\AssetStatus;
 use App\Enums\DepreciationMethod;
+use App\Enums\DepreciationPeriodStatus;
+use App\Enums\FiscalAssetGroup;
 use App\Enums\PlacementType;
 use App\Models\Asset;
 use App\Models\AssetCategory;
@@ -93,6 +95,7 @@ class AssetForm
                         $set('is_depreciable', $category->is_depreciable);
                         $set('depreciation_method', $category->depreciation_method->value);
                         $set('useful_life_months', $category->useful_life_months);
+                        $set('fiscal_method', $category->fiscal_method->value);
                     }),
                 Select::make('brand_id')
                     ->label('Brand')
@@ -164,6 +167,7 @@ class AssetForm
             Grid::make(2)->schema([
                 DatePicker::make('acquisition_date')
                     ->label('Acquisition Date')
+                    ->disabled(fn (?Asset $record): bool => self::hasPostedDepreciation($record))
                     ->required()
                     ->default(now())
                     ->maxDate(now())
@@ -171,6 +175,10 @@ class AssetForm
                     ->afterStateUpdated(fn (Set $set, mixed $state) => $set('depreciation_start_date', $state)),
                 TextInput::make('acquisition_cost')
                     ->label('Acquisition Cost')
+                    ->disabled(fn (?Asset $record): bool => self::hasPostedDepreciation($record))
+                    ->helperText(fn (?Asset $record): ?string => self::hasPostedDepreciation($record)
+                        ? 'Locked: depreciation has already been posted from this cost and date.'
+                        : null)
                     ->numeric()
                     ->prefix('Rp')
                     ->required()
@@ -201,7 +209,8 @@ class AssetForm
     {
         return [
             Section::make('Depreciation')
-                ->description('Initial values follow the category. Depreciation is calculated in a later phase.')
+                ->description('Initial values follow the category. Locked once depreciation has been posted for this asset.')
+                ->disabled(fn (?Asset $record): bool => self::hasPostedDepreciation($record))
                 ->schema([
                     Toggle::make('is_depreciable')
                         ->label('Depreciable')
@@ -230,6 +239,28 @@ class AssetForm
                             DatePicker::make('depreciation_start_date')
                                 ->label('Depreciation Start'),
                         ]),
+                ]),
+            Section::make('Tax Depreciation')
+                ->description('Useful life and rate follow the tax group. Leave the group empty to use the category\'s.')
+                ->disabled(fn (?Asset $record): bool => self::hasPostedDepreciation($record))
+                ->schema([
+                    Grid::make(2)->schema([
+                        Select::make('fiscal_group')
+                            ->label('Tax Asset Group')
+                            ->options(FiscalAssetGroup::class)
+                            ->placeholder('Use the category\'s group')
+                            ->live(),
+                        Select::make('fiscal_method')
+                            ->label('Tax Method')
+                            ->options(collect(DepreciationMethod::cases())
+                                ->filter(fn (DepreciationMethod $method): bool => $method->isAllowedForFiscal())
+                                ->mapWithKeys(fn (DepreciationMethod $method): array => [$method->value => $method->getLabel()])
+                                ->all())
+                            ->default(DepreciationMethod::StraightLine->value)
+                            ->required()
+                            ->disableOptionWhen(fn (string $value, Get $get): bool => $value === DepreciationMethod::DoubleDeclining->value
+                                && (bool) FiscalAssetGroup::tryFrom((string) ($get('fiscal_group') instanceof FiscalAssetGroup ? $get('fiscal_group')->value : $get('fiscal_group')))?->isBuilding()),
+                    ]),
                 ]),
             Section::make('Warranty')
                 ->schema([
@@ -333,6 +364,21 @@ class AssetForm
                 ->maxFiles(10)
                 ->columnSpanFull(),
         ];
+    }
+
+    /**
+     * Posted depreciation was computed from these values, so they freeze once any
+     * month is posted — changing them afterwards would leave the ledger inconsistent.
+     */
+    private static function hasPostedDepreciation(?Asset $record): bool
+    {
+        if ($record === null || ! $record->exists) {
+            return false;
+        }
+
+        return $record->depreciationEntries()
+            ->whereHas('depreciationPeriod', fn (Builder $query) => $query->where('status', DepreciationPeriodStatus::Posted->value))
+            ->exists();
     }
 
     /**

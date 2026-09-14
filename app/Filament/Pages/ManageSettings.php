@@ -3,7 +3,6 @@
 namespace App\Filament\Pages;
 
 use App\Models\Setting;
-use App\Support\Appearance;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -12,17 +11,17 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\EmbeddedSchema;
+use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Support\Arr;
 use UnitEnum;
 
 class ManageSettings extends Page
 {
-    protected string $view = 'filament.pages.manage-settings';
-
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
 
     protected static string|UnitEnum|null $navigationGroup = 'Settings';
@@ -47,14 +46,6 @@ class ManageSettings extends Page
         'asset_code_format',
         'asset_code_sequence_length',
         'fiscal_year_start_month',
-        Appearance::MAX_CONTENT_WIDTH,
-    ];
-
-    /**
-     * Keys stored under the `appearance` group rather than the general one.
-     */
-    private const APPEARANCE_KEYS = [
-        Appearance::MAX_CONTENT_WIDTH,
     ];
 
     public function mount(): void
@@ -115,17 +106,6 @@ class ManageSettings extends Page
                                 ->required(),
                         ]),
                     ]),
-                Section::make('Appearance')
-                    ->description('Applies to every page of the panel. Takes effect as soon as the page reloads.')
-                    ->schema([
-                        Select::make(Appearance::MAX_CONTENT_WIDTH)
-                            ->label('Content Width')
-                            ->options(Appearance::maxContentWidthOptions())
-                            ->default(Appearance::DEFAULT_MAX_CONTENT_WIDTH->value)
-                            ->selectablePlaceholder(false)
-                            ->required()
-                            ->helperText('How wide the content area may grow before it stops and centres.'),
-                    ]),
                 Section::make('Period')
                     ->schema([
                         Select::make('fiscal_year_start_month')
@@ -142,6 +122,26 @@ class ManageSettings extends Page
     }
 
     /**
+     * Renders the form the way Filament's own pages do, so the save button gets
+     * the panel's spacing. Utility classes in a custom Blade view are not compiled
+     * into the panel CSS, which left the button flush against the card.
+     */
+    public function content(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Form::make([EmbeddedSchema::make('form')])
+                    ->id('form')
+                    ->livewireSubmitHandler('save')
+                    ->footer([
+                        Actions::make($this->getFormActions())
+                            ->alignment($this->getFormActionsAlignment())
+                            ->key('form-actions'),
+                    ]),
+            ]);
+    }
+
+    /**
      * @return array<int, Action>
      */
     protected function getFormActions(): array
@@ -149,7 +149,8 @@ class ManageSettings extends Page
         return [
             Action::make('save')
                 ->label('Save Settings')
-                ->submit('save'),
+                ->submit('save')
+                ->keyBindings(['mod+s']),
         ];
     }
 
@@ -157,16 +158,11 @@ class ManageSettings extends Page
     {
         $values = $this->form->getState();
 
-        Setting::setMany(Arr::except($values, self::APPEARANCE_KEYS));
-        Setting::setMany(Arr::only($values, self::APPEARANCE_KEYS), group: 'appearance');
+        Setting::setMany($values);
 
         Notification::make()
             ->title('Settings saved')
             ->success()
             ->send();
-
-        // The panel width lives in the outer layout, which Livewire does not
-        // re-render, so a full page visit is what makes the change visible.
-        $this->redirect(static::getUrl(), navigate: false);
     }
 }

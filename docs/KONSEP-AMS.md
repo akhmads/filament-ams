@@ -345,7 +345,7 @@ Dibangun di atas **Laravel 13.31**, **Filament 5.8**, PHP 8.4, MySQL 8.0.46 (dat
 | **Master data** | Kategori & lokasi bertingkat (nested set), cabang, departemen, karyawan, merek, model, supplier |
 | **Dashboard** | 4 KPI, donat status, batang per kategori, tabel garansi akan berakhir |
 | **Hak akses** | 161 permission + 13 policy via Shield; 4 peran: super_admin, asset_manager (137), asset_staff (35), auditor (27) |
-| **Pengaturan** | Identitas perusahaan, logo, format penomoran, tahun fiskal, dan **Appearance** — lebar area konten panel, memakai enum `Width` bawaan Filament |
+| **Pengaturan** | Identitas perusahaan, logo, format penomoran, tahun fiskal, tahun fiskal. **Appearance** punya halaman sendiri (`ManageAppearance`) — logo terang/gelap, tinggi logo dalam rem, warna tema (primary, gray, danger, info, success, warning — palet bawaan Filament, pola `App\Support\Theme` dari lastmile), lebar area konten panel, serta SPA mode dengan opsi prefetch saat hover, memakai enum `Width` bawaan Filament |
 | **Tes** | 59 tes, 101 asersi — generator kode, ledger perpindahan, penyelesaian BAST, PDF label & BAST, render seluruh halaman panel |
 
 ### Menjalankan
@@ -369,3 +369,65 @@ Masuk di `/admin` dengan `admin@admin.com` / `password` — **ganti kata sandi i
 - `RoleSeeder` memanggil `shield:generate` sehingga peran tetap benar ketika resource baru ditambahkan; daftar permission di-cache per proses agar tes tetap cepat.
 - Kolom penyusutan pada `assets` sudah terisi dari kategori, tinggal ditambahkan tabel `depreciation_entries` dan proses posting bulanan di Fase 2.
 - Belum ada repositori git — jalankan `git init` bila ingin mulai melacak perubahan.
+
+---
+
+## 11. Fase 2 — Penyusutan (sedang berjalan)
+
+### Keputusan
+| Topik | Keputusan |
+|---|---|
+| Buku | **Komersial + Fiskal (pajak)** — dua jadwal paralel per aset |
+| Awal susut | **Bulan perolehan dihitung penuh** |
+| Pemicu maintenance | Kalender (dikerjakan setelah penyusutan) |
+| Jurnal | Laporan + ekspor Excel (menunggu persetujuan dependensi) |
+
+### Aturan fiskal yang diverifikasi dari sumber resmi
+- **Tarif & masa manfaat** (UU 36/2008 Pasal 11 ayat 6): Kelompok 1 4 th 25%/50% · Kelompok 2 8 th 12,5%/25% · Kelompok 3 16 th 6,25%/12,5% · Kelompok 4 20 th 5%/10% · Bangunan permanen 20 th 5% · tidak permanen 10 th 10% (garis lurus / saldo menurun; bangunan hanya garis lurus).
+- **Saldo menurun** (ayat 2): tarif atas nilai sisa buku; *"pada akhir masa manfaat nilai sisa buku disusutkan sekaligus"*.
+- **Awal penyusutan** (ayat 3): bulan dilakukannya pengeluaran. Contoh PMK 72/2023: perahu Kelompok 2 dibeli Oktober 2023 → 3/12 di 2023, habis 9/12 di 2031.
+- **Harta tidak tercantum di lampiran PMK 72/2023**: memakai masa manfaat Kelompok 3.
+- **Penarikan/penjualan** (ayat 8): sisa nilai buku dibebankan sebagai kerugian — ditangani modul disposal (Fase 3).
+
+Sumber: [UU 36/2008 — pajak.go.id](https://www.pajak.go.id/sites/default/files/2019-07/UU%2036%202008.pdf), [Sosialisasi PMK 72/2023 — IAI](https://web.iaiglobal.or.id/assets/files/file_publikasi/Sosialisasi%20PMK%2072%20Tahun%202023%20Penyusutan%20Amortisasi.pdf), [Ringkasan PMK 72/2023 — JDIH Kemenkeu](https://jdih.kemenkeu.go.id/dok/pmk-72-tahun-2023/summary), [Pokok aturan PMK-72/2023 — DJP](https://www.pajak.go.id/en/node/98645).
+
+### Yang sudah jalan
+- `DepreciationCalculator` murni tanpa database: garis lurus, saldo menurun (tahun mengikuti `fiscal_year_start_month`), jumlah angka tahun (komersial saja). Uang dihitung dalam **sen bilangan bulat** dengan pembulatan kumulatif — CLI PHP di mesin ini tidak punya bcmath, dan float tidak dipakai.
+- `DepreciationRunner`: draft per buku per bulan di `depreciation_periods` / `depreciation_entries`; **posting berurutan tanpa celah**, selalu menghitung ulang sebelum mengunci; bulan yang sudah diposting dan bulan sebelumnya tidak bisa dihitung ulang.
+- Buku fiskal: kelompok dari aset atau, bila kosong, dari kategori; tanpa kelompok → tidak masuk buku fiskal; tanpa residu; mulai bulan perolehan walau buku komersial memakai tanggal mulai susut; bangunan dipaksa garis lurus.
+- Aset berstatus Disposed/Lost tidak disusutkan (tanggal & laba/rugi pelepasan milik modul disposal).
+- Kategori: kelompok & metode fiskal, akun beban dan akumulasi untuk jurnal. Aset: kelompok & metode fiskal sendiri (opsional).
+- **Harga & tanggal perolehan serta pengaturan penyusutan aset terkunci** setelah ada bulan yang diposting, agar buku besar tetap konsisten.
+- Resource **Depreciation Periods** (grup navigasi Depreciation): Calculate Month, Recalculate, Post; rincian per aset. Hak akses lewat policy Shield — calculate = `create`, recalculate/post = `update`.
+- Command `depreciation:calculate [--book=] [--month=YYYY-MM]` + jadwal hari terakhir tiap bulan pukul 22:00 (hanya draft, tidak pernah posting). **Butuh cron `schedule:run` di server.**
+- Laporan **Book Value**: harga perolehan, akumulasi, dan nilai buku per aset per akhir bulan untuk buku yang dipilih. Hanya penyusutan yang **sudah diposting** yang dihitung (dibatasi bulan posting terakhir), jadi draft tidak mengubah angka. Filter kategori & cabang, total di bawah tabel.
+- Laporan **Depreciation Journal**: satu baris per kategori — debit akun beban, kredit akun akumulasi, jumlah aset, nominal, total. Draft ikut tampil (dengan keterangan "draft") agar jurnal bisa dicek sebelum posting; aset yang sudah dihapus tetap masuk jurnal bulannya.
+- Kedua laporan memakai hak akses `viewAny` Depreciation Period.
+
+### Catatan teknis
+- `phpunit.xml` memakai `VIEW_COMPILED_PATH=storage/framework/testing/views`: view terkompilasi bersama dimiliki `www-data`, dan Blade tidak bisa `touch()` berkas milik user lain.
+
+- **Ekspor CSV & XLSX** pada kedua laporan (tombol Export). Ekspor mengikuti filter, pencarian, dan urutan yang sedang tampil, tanpa paging. XLSX menyimpan tanggal sebagai sel tanggal dan nominal sebagai angka berformat ribuan; CSV memakai angka polos, tanggal ISO, dan BOM agar Excel membacanya sebagai UTF-8.
+- Ekspor jurnal berbentuk **baris jurnal siap impor**: dua baris per kategori (debit akun beban, kredit akun akumulasi) bertanggal akhir bulan. Nama file jurnal yang belum diposting diberi akhiran `-draft`; bulan yang belum dihitung tidak menampilkan tombol ekspor.
+- Dependensi `openspout/openspout ^4.32` kini dideklarasikan langsung (sebelumnya hanya transitif lewat Filament). File sementara ditulis ke `storage/app/private/exports`, bukan folder temp sistem, dan dihapus setelah diunduh.
+
+---
+
+## 12. Fase 2 — Maintenance Preventif (sedang berjalan)
+
+### Keputusan
+- Interval **kalender saja** (hari/minggu/bulan/tahun); interval meter (jam operasi/km) belum.
+- Jatuh tempo **mengikuti kalender, bukan tanggal selesai**: jatuh tempo berikutnya = jatuh tempo sebelumnya + interval, jadi servis yang telat tidak menggeser seluruh jadwal. Bulan/tahun tidak "meluber" (tanggal 31 jatuh ke akhir bulan yang lebih pendek).
+- Satu aset punya **paling banyak satu work order terbuka per rencana**. Jadwal yang terlewat digabung menjadi satu work order untuk jatuh tempo terakhir, tidak menumpuk.
+- Jatuh tempo pertama = tanggal mulai rencana; aset yang diperoleh setelahnya jatuh tempo satu interval setelah tanggal perolehan.
+- Work order PM **tidak mengubah status aset** (servis rutin tidak membuat aset berhenti dipakai). Perpindahan ke vendor/perbaikan menjadi urusan modul repair.
+
+### Yang sudah jalan
+- **Maintenance Plans** (grup navigasi Maintenance): untuk satu aset atau satu kategori (opsional termasuk subkategori; aset Disposed/Lost/Retired dilewati), interval, tanggal mulai, lead time (hari sebelum jatuh tempo work order dibuka), teknisi, vendor servis, estimasi biaya & durasi, checklist, instruksi, aktif/nonaktif. Tombol **Open Due Work Orders** menjalankan generator saat itu juga.
+- **Work Orders**: nomor `WO/YYMM/SEQ`, dibuat otomatis dari rencana (teknisi, estimasi, checklist, dan instruksi **disalin** sehingga perubahan rencana tidak menulis ulang pekerjaan lama) atau manual. Alur `Open → In Progress → Completed / Cancelled`. Checklist hanya bisa dicentang saat In Progress (tercatat siapa & kapan). Hasil **OK** mewajibkan semua checklist tercentang; pekerjaan yang tidak tuntas diselesaikan sebagai **Needs Follow-up** dengan temuan wajib. Biaya aktual, waktu kerja, temuan, alasan pembatalan tersimpan. Detail hanya bisa diedit selama Open. Tab To Do / Overdue / Completed, badge overdue di navigasi.
+- Halaman aset punya tab **Maintenance** berisi riwayat work order.
+- Command `maintenance:generate-work-orders [--date=YYYY-MM-DD]`, dijadwalkan setiap hari pukul 06:00; aman dijalankan berulang (unik per rencana + aset + tanggal jatuh tempo, termasuk work order yang dihapus). **Butuh cron `schedule:run` di server.**
+- Hak akses lewat policy Shield; start/centang/selesai/batal = `update` WorkOrder. `RoleSeeder`: asset_staff kini boleh membuat & mengerjakan work order (bukan rencana).
+
+### Berikutnya
+Tiket repair (corrective) · kalender maintenance · notifikasi (work order dibuka, jatuh tempo, terlambat) · integrasi sparepart ke stok (Fase 3).

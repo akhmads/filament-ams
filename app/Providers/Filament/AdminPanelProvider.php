@@ -7,6 +7,7 @@ use App\Filament\Widgets\AssetsByStatusChart;
 use App\Filament\Widgets\AssetStatsOverview;
 use App\Filament\Widgets\AttentionNeededTable;
 use App\Support\Appearance;
+use App\Support\Theme;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -16,7 +17,6 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
 use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -40,15 +40,25 @@ class AdminPanelProvider extends PanelProvider
             // Chosen on Settings → Appearance. Read through a closure so the panel
             // picks up a change on the next page load, without a deploy.
             ->maxContentWidth(fn (): Width => Appearance::maxContentWidth())
-            ->colors([
-                'primary' => Color::Blue,
-            ])
+            ->brandLogo(fn (): ?string => Appearance::brandLogoUrl())
+            ->darkModeBrandLogo(fn (): ?string => Appearance::darkModeBrandLogoUrl())
+            ->brandLogoHeight(fn (): string => Appearance::brandLogoHeight())
+            // SPA mode and hover prefetching, chosen on Settings → Appearance.
+            ->spa(
+                fn (): bool => Appearance::isSpaMode(),
+                hasPrefetching: fn (): bool => Appearance::hasSpaPrefetching(),
+            )
+            // Palette chosen on Settings → Appearance. A closure so the setting is
+            // read per request when the panel boots, not when the app boots.
+            ->colors(fn (): array => Theme::colors())
             // Filament rejects icons on a group when its items carry icons too,
             // so the icons stay on the individual resources.
             ->navigationGroups([
-                NavigationGroup::make('Aset'),
+                NavigationGroup::make('Assets'),
+                NavigationGroup::make('Depreciation'),
+                NavigationGroup::make('Maintenance'),
                 NavigationGroup::make('Master Data')->collapsed(),
-                NavigationGroup::make('Pengaturan')->collapsed(),
+                NavigationGroup::make('Settings')->collapsed(),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
@@ -64,7 +74,10 @@ class AdminPanelProvider extends PanelProvider
                 AttentionNeededTable::class,
             ])
             ->plugins([
-                FilamentShieldPlugin::make(),
+                // Roles sit with Users under Settings instead of Shield's own group.
+                FilamentShieldPlugin::make()
+                    ->navigationGroup('Settings')
+                    ->navigationSort(15),
             ])
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->databaseNotifications()

@@ -28,8 +28,19 @@ class AssetCategoryInfolist
                         Grid::make(4)->schema([
                             IconEntry::make('is_depreciable')->label('Depreciable')->boolean(),
                             TextEntry::make('depreciation_method')->label('Method')->badge(),
-                            TextEntry::make('useful_life_months')->label('Useful Life')->suffix(' bulan'),
+                            TextEntry::make('useful_life_months')->label('Useful Life')->suffix(' months'),
                             TextEntry::make('residual_percent')->label('Residual')->suffix(' %'),
+                        ]),
+                    ]),
+                Section::make('Tax Depreciation & Journal Accounts')
+                    ->schema([
+                        Grid::make(4)->schema([
+                            TextEntry::make('fiscal_group')->label('Tax Asset Group')->badge()->placeholder('Not set'),
+                            TextEntry::make('fiscal_method')->label('Tax Method')->badge(),
+                            TextEntry::make('expense_account_code')->label('Expense Account')->placeholder('—')
+                                ->belowContent(fn ($record): ?string => $record->expense_account_name),
+                            TextEntry::make('accumulated_account_code')->label('Accumulated Account')->placeholder('—')
+                                ->belowContent(fn ($record): ?string => $record->accumulated_account_name),
                         ]),
                     ]),
             ]);

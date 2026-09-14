@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Setting;
 use App\Support\Appearance;
+use App\Support\Theme;
 use Illuminate\Database\Seeder;
 
 class SettingSeeder extends Seeder
@@ -20,8 +21,6 @@ class SettingSeeder extends Seeder
             'fiscal_year_start_month' => 1,
         ]);
 
-        Setting::setMany([
-            Appearance::MAX_CONTENT_WIDTH => Appearance::DEFAULT_MAX_CONTENT_WIDTH->value,
-        ], group: 'appearance');
+        Setting::setMany([...Appearance::defaults(), ...Theme::DEFAULTS], group: Appearance::GROUP);
     }
 }

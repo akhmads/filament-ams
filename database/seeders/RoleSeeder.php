@@ -25,8 +25,8 @@ class RoleSeeder extends Seeder
     /** Day-to-day actions, without the ability to delete. */
     private const OPERATIONAL_ACTIONS = ['ViewAny', 'View', 'Create', 'Update', 'Replicate', 'Reorder'];
 
-    /** Subjects asset staff may create and edit. */
-    private const STAFF_WRITABLE_SUBJECTS = ['Asset', 'AssetAssignment'];
+    /** Subjects asset staff may create and edit. Staff carry out work orders but do not plan them. */
+    private const STAFF_WRITABLE_SUBJECTS = ['Asset', 'AssetAssignment', 'WorkOrder'];
 
     /**
      * The permission list comes from code rather than data, so scanning the

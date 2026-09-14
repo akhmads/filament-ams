@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\AssetCondition;
 use App\Enums\AssetStatus;
 use App\Enums\DepreciationMethod;
+use App\Enums\FiscalAssetGroup;
 use App\Enums\PlacementType;
 use Database\Factories\AssetFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -40,6 +41,7 @@ class Asset extends Model implements HasMedia
         'serial_number', 'manufacture_year',
         'acquisition_date', 'acquisition_cost', 'po_number', 'invoice_number', 'funding_source',
         'is_depreciable', 'depreciation_method', 'useful_life_months', 'residual_value', 'depreciation_start_date',
+        'fiscal_group', 'fiscal_method',
         'warranty_start', 'warranty_end', 'warranty_vendor',
         'branch_id', 'department_id', 'placement_type', 'current_location_id', 'current_employee_id',
         'status', 'condition', 'specs', 'notes',
@@ -53,6 +55,8 @@ class Asset extends Model implements HasMedia
             'condition' => AssetCondition::class,
             'placement_type' => PlacementType::class,
             'depreciation_method' => DepreciationMethod::class,
+            'fiscal_group' => FiscalAssetGroup::class,
+            'fiscal_method' => DepreciationMethod::class,
             'acquisition_date' => 'date',
             'depreciation_start_date' => 'date',
             'warranty_start' => 'date',
@@ -166,6 +170,18 @@ class Asset extends Model implements HasMedia
     public function movements(): HasMany
     {
         return $this->hasMany(AssetMovement::class)->latest('moved_at');
+    }
+
+    /** @return HasMany<DepreciationEntry, $this> */
+    public function depreciationEntries(): HasMany
+    {
+        return $this->hasMany(DepreciationEntry::class);
+    }
+
+    /** @return HasMany<WorkOrder, $this> */
+    public function workOrders(): HasMany
+    {
+        return $this->hasMany(WorkOrder::class);
     }
 
     /** @return HasMany<AssetAssignmentItem, $this> */
