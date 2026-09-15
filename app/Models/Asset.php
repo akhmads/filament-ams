@@ -184,6 +184,12 @@ class Asset extends Model implements HasMedia
         return $this->hasMany(WorkOrder::class);
     }
 
+    /** @return HasMany<RepairTicket, $this> */
+    public function repairTickets(): HasMany
+    {
+        return $this->hasMany(RepairTicket::class);
+    }
+
     /** @return HasMany<AssetAssignmentItem, $this> */
     public function assignmentItems(): HasMany
     {

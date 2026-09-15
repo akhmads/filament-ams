@@ -22,6 +22,7 @@ class WorkOrderService
 {
     public function __construct(
         private readonly DocumentNumberGenerator $numbers,
+        private readonly MaintenanceNotifier $notifier,
     ) {}
 
     /**
@@ -59,6 +60,8 @@ class WorkOrderService
                     ->map(fn (string $task, int $index): array => ['task' => $task, 'sort_order' => $index + 1])
                     ->all()
             );
+
+            $this->notifier->workOrderAssigned($workOrder);
 
             return $workOrder;
         });

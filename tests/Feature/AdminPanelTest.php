@@ -14,6 +14,7 @@ use App\Filament\Resources\Employees\EmployeeResource;
 use App\Filament\Resources\LabelTemplates\LabelTemplateResource;
 use App\Filament\Resources\Locations\LocationResource;
 use App\Filament\Resources\MaintenancePlans\MaintenancePlanResource;
+use App\Filament\Resources\RepairTickets\RepairTicketResource;
 use App\Filament\Resources\Suppliers\SupplierResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Filament\Resources\WorkOrders\WorkOrderResource;
@@ -66,6 +67,7 @@ class AdminPanelTest extends TestCase
             'label templates' => [LabelTemplateResource::class],
             'maintenance plans' => [MaintenancePlanResource::class],
             'work orders' => [WorkOrderResource::class],
+            'repair tickets' => [RepairTicketResource::class],
             'users' => [UserResource::class],
         ];
     }

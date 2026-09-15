@@ -59,6 +59,16 @@
             "@php artisan config:clear --ansi @no_additional_args",
             "@php artisan test"
         ],
+        "shield": [
+            "@php artisan shield:generate --all --panel=admin --option=permissions --ansi"
+        ],
+        "deploy": [
+            "@composer install --no-dev --optimize-autoloader --no-interaction --ansi",
+            "@php artisan migrate --force --ansi",
+            "@composer shield",
+            "@php artisan optimize:clear --ansi",
+            "@php artisan optimize --ansi"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi",

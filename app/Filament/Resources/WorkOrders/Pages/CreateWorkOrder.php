@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\WorkOrders\Pages;
 
 use App\Filament\Resources\WorkOrders\WorkOrderResource;
+use App\Models\User;
+use App\Services\MaintenanceNotifier;
 use App\Services\WorkOrderService;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +23,14 @@ class CreateWorkOrder extends CreateRecord
         $data['created_by'] = Auth::id();
 
         return $data;
+    }
+
+    protected function afterCreate(): void
+    {
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        app(MaintenanceNotifier::class)->workOrderAssigned($this->record, $user);
     }
 
     protected function getRedirectUrl(): string

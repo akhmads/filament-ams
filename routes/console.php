@@ -20,3 +20,10 @@ Schedule::command('maintenance:generate-work-orders')
     ->dailyAt('06:00')
     ->withoutOverlapping()
     ->onOneServer();
+
+// Remind technicians of overdue work and work due today, after the day's work
+// orders have been opened.
+Schedule::command('maintenance:send-reminders')
+    ->dailyAt('07:00')
+    ->withoutOverlapping()
+    ->onOneServer();

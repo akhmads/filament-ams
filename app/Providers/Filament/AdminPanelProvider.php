@@ -6,6 +6,7 @@ use App\Filament\Widgets\AssetsByCategoryChart;
 use App\Filament\Widgets\AssetsByStatusChart;
 use App\Filament\Widgets\AssetStatsOverview;
 use App\Filament\Widgets\AttentionNeededTable;
+use App\Filament\Widgets\MaintenanceStatsOverview;
 use App\Support\Appearance;
 use App\Support\Theme;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -72,6 +73,7 @@ class AdminPanelProvider extends PanelProvider
                 AssetsByStatusChart::class,
                 AssetsByCategoryChart::class,
                 AttentionNeededTable::class,
+                MaintenanceStatsOverview::class,
             ])
             ->plugins([
                 // Roles sit with Users under Settings instead of Shield's own group.

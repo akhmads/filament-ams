@@ -8,6 +8,7 @@ use Filament\Models\Contracts\HasAvatar;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -58,5 +59,19 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     public function employee(): HasOne
     {
         return $this->hasOne(Employee::class);
+    }
+
+    /**
+     * Users granted a permission directly or through a role. Unlike Spatie's
+     * permission() scope it does not throw when the permission has not been
+     * generated yet.
+     *
+     * @param  Builder<User>  $query
+     */
+    public function scopeHoldingPermission(Builder $query, string $permission): void
+    {
+        $query->where(fn (Builder $query) => $query
+            ->whereHas('roles.permissions', fn (Builder $query) => $query->where('name', $permission))
+            ->orWhereHas('permissions', fn (Builder $query) => $query->where('name', $permission)));
     }
 }

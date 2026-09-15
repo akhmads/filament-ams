@@ -372,7 +372,7 @@ Masuk di `/admin` dengan `admin@admin.com` / `password` — **ganti kata sandi i
 
 ---
 
-## 11. Fase 2 — Penyusutan (sedang berjalan)
+## 11. Fase 2 — Penyusutan (selesai)
 
 ### Keputusan
 | Topik | Keputusan |
@@ -413,7 +413,7 @@ Sumber: [UU 36/2008 — pajak.go.id](https://www.pajak.go.id/sites/default/files
 
 ---
 
-## 12. Fase 2 — Maintenance Preventif (sedang berjalan)
+## 12. Fase 2 — Maintenance Preventif (selesai)
 
 ### Keputusan
 - Interval **kalender saja** (hari/minggu/bulan/tahun); interval meter (jam operasi/km) belum.
@@ -429,5 +429,33 @@ Sumber: [UU 36/2008 — pajak.go.id](https://www.pajak.go.id/sites/default/files
 - Command `maintenance:generate-work-orders [--date=YYYY-MM-DD]`, dijadwalkan setiap hari pukul 06:00; aman dijalankan berulang (unik per rencana + aset + tanggal jatuh tempo, termasuk work order yang dihapus). **Butuh cron `schedule:run` di server.**
 - Hak akses lewat policy Shield; start/centang/selesai/batal = `update` WorkOrder. `RoleSeeder`: asset_staff kini boleh membuat & mengerjakan work order (bukan rencana).
 
+---
+
+## 13. Fase 2 — Tiket Repair, Kalender & Notifikasi (selesai)
+
+### Keputusan
+| Topik | Keputusan |
+|---|---|
+| Dampak ke aset | **Lewat ledger** — mulai perbaikan mencatat movement `repair` ke status Under Repair; perbaikan vendor memindahkan aset ke penempatan Vendor. Selesai = kembali ke penempatan asal dengan status sebelumnya; tidak bisa diperbaiki = Retired |
+| Kalender | Grid bulanan buatan sendiri, tanpa dependensi baru (plugin FullCalendar untuk Filament 5 masih beta) |
+| Notifikasi | Hanya di aplikasi (lonceng Filament), dikirim sinkron sehingga tidak butuh queue worker |
+
+### Yang sudah jalan
+- **Repair Tickets** (grup Maintenance): nomor `RPR/YYMM/SEQ`, alur `Reported → Verified → Approved → In Repair → Repaired / Cannot Be Repaired`; **Rejected** bisa dipilih sampai perbaikan dimulai. Laporan berisi aset, masalah, prioritas, karyawan pelapor, waktu, deskripsi, dan foto. Laporan hanya bisa diedit sebelum disetujui.
+- Status garansi **dibekukan saat dilaporkan** (`is_under_warranty`) dan tampil sebagai peringatan "klaim ke vendor"; form verifikasi langsung menyarankan perbaikan vendor bila masih bergaransi.
+- Verifikasi menentukan in-house atau vendor, teknisi, vendor (wajib untuk perbaikan vendor), dan estimasi biaya. **Approval memakai permission khusus `Approve:RepairTicket`** (custom permission Shield — `config/filament-shield.php` kini dipublikasikan): asset_staff memverifikasi dan mengerjakan, asset_manager menyetujui biaya.
+- Mulai perbaikan: satu aset hanya boleh punya satu perbaikan berjalan; aset yang sedang dalam perjalanan, hilang, atau dihapus ditolak oleh aturan transisi ledger, dan tiket tetap Approved. Movement menyimpan referensi ke tiket; `repair_movement_id` menunjuk movement keluar sehingga penempatan asal bisa dipulihkan.
+- Selesai: kondisi aset, biaya aktual, resolusi (wajib bila tidak bisa diperbaiki). **Downtime** dihitung dari mulai sampai selesai.
+- Halaman aset: tombol **Report Damage** (form terbuka dengan aset terisi) dan tab **Repairs**.
+- **Maintenance Calendar**: grid bulanan (minggu dimulai Senin) berisi work order pada tanggal jatuh tempo (merah bila terlambat), tiket repair pada tanggal laporan, dan **jadwal PM yang belum menjadi work order** — diproyeksikan dengan aturan `MaintenanceScheduler::nextDueDate`, dikelompokkan per rencana per hari, paling jauh 12 bulan ke depan, dan tidak untuk tanggal yang sudah lewat. Tiap jenis hanya tampil bagi yang berhak melihatnya.
+- **Notifikasi** (lonceng panel): work order ditugaskan (dibuka rencana, dibuat manual, atau teknisinya diganti), kerusakan dilaporkan (ke pemegang `Update:RepairTicket`), perbaikan menunggu approval (ke pemegang `Approve:RepairTicket`), tiket repair ditugaskan. Tidak ada notifikasi atas tindakan sendiri; user nonaktif dilewati.
+- Command `maintenance:send-reminders`, dijadwalkan pukul 07:00: paling banyak satu pengingat per user per hari berisi jumlah work order terlambat dan jatuh tempo hari ini; work order tanpa teknisi dihitung untuk para perencana (`Create:MaintenancePlan`).
+- Widget dashboard **Maintenance**: work order terbuka & terlambat, jatuh tempo 30 hari, tiket repair terbuka & menunggu approval, aset Under Repair.
+
+### Catatan teknis
+- Di SQLite kolom `date` tersimpan dengan jam (`Y-m-d H:i:s`), jadi query per tanggal memakai rentang (`>=` hari ini, `<` besok), bukan kesamaan.
+- Panel belum punya tema Tailwind sendiri; kalender memakai `<style>` dengan variabel warna Filament (`--primary-600`, `--gray-200`, …) sehingga ikut palet Appearance dan mode gelap.
+- Setelah deploy jalankan `php artisan migrate` dan `RoleSeeder` agar permission `RepairTicket` dan `Approve:RepairTicket` terbentuk dan terbagi ke peran.
+
 ### Berikutnya
-Tiket repair (corrective) · kalender maintenance · notifikasi (work order dibuka, jatuh tempo, terlambat) · integrasi sparepart ke stok (Fase 3).
+Aset pengganti sementara (loaner) · interval meter · sparepart dari work order/repair ke stok (Fase 3) · usul penghapusan dari tiket "Cannot Be Repaired" (Fase 3) · MTTR/MTBF (Fase 4).

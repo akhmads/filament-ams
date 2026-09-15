@@ -8,6 +8,7 @@ use App\Filament\Resources\Assets\Pages\ListAssets;
 use App\Filament\Resources\Assets\Pages\ViewAsset;
 use App\Filament\Resources\Assets\RelationManagers\ComponentsRelationManager;
 use App\Filament\Resources\Assets\RelationManagers\MovementsRelationManager;
+use App\Filament\Resources\Assets\RelationManagers\RepairTicketsRelationManager;
 use App\Filament\Resources\Assets\RelationManagers\WorkOrdersRelationManager;
 use App\Filament\Resources\Assets\Schemas\AssetForm;
 use App\Filament\Resources\Assets\Schemas\AssetInfolist;
@@ -83,6 +84,7 @@ class AssetResource extends Resource
             MovementsRelationManager::class,
             ComponentsRelationManager::class,
             WorkOrdersRelationManager::class,
+            RepairTicketsRelationManager::class,
         ];
     }
 
