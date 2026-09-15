@@ -7,6 +7,7 @@ use App\Enums\StockDocumentType;
 use App\Filament\Actions\PostStockDocumentAction;
 use App\Models\StockDocument;
 use App\Support\WarehouseOptions;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -63,10 +64,12 @@ class StockDocumentsTable
                     ->options(fn (): array => WarehouseOptions::all()),
             ])
             ->recordActions([
-                ViewAction::make(),
-                PostStockDocumentAction::make(),
-                EditAction::make()
-                    ->visible(fn (StockDocument $record): bool => $record->isEditable()),
+                ActionGroup::make([
+                    ViewAction::make(),
+                    PostStockDocumentAction::make(),
+                    EditAction::make()
+                        ->visible(fn (StockDocument $record): bool => $record->isEditable()),
+                ]),
             ]);
     }
 }

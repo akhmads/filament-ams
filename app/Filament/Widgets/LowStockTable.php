@@ -6,6 +6,7 @@ use App\Filament\Resources\StockItems\StockItemResource;
 use App\Models\StockItem;
 use App\Support\Quantity;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
@@ -61,10 +62,12 @@ class LowStockTable extends TableWidget
                     ->alignEnd(),
             ])
             ->recordActions([
-                Action::make('open')
-                    ->label('Open')
-                    ->icon('heroicon-m-arrow-top-right-on-square')
-                    ->url(fn (StockItem $record): string => StockItemResource::getUrl('view', ['record' => $record])),
+                ActionGroup::make([
+                    Action::make('open')
+                        ->label('Open')
+                        ->icon('heroicon-m-arrow-top-right-on-square')
+                        ->url(fn (StockItem $record): string => StockItemResource::getUrl('view', ['record' => $record])),
+                ]),
             ])
             ->paginated([5, 10, 25]);
     }

@@ -6,6 +6,7 @@ use App\Enums\WorkOrderStatus;
 use App\Filament\Actions\CompleteWorkOrderAction;
 use App\Filament\Actions\StartWorkOrderAction;
 use App\Models\WorkOrder;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -87,11 +88,13 @@ class WorkOrdersTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                ViewAction::make(),
-                StartWorkOrderAction::make(),
-                CompleteWorkOrderAction::make(),
-                EditAction::make()
-                    ->visible(fn (WorkOrder $record): bool => $record->isEditable()),
+                ActionGroup::make([
+                    ViewAction::make(),
+                    StartWorkOrderAction::make(),
+                    CompleteWorkOrderAction::make(),
+                    EditAction::make()
+                        ->visible(fn (WorkOrder $record): bool => $record->isEditable()),
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

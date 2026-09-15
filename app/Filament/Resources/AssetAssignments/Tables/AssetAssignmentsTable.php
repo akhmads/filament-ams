@@ -7,6 +7,7 @@ use App\Enums\AssignmentType;
 use App\Filament\Actions\CompleteAssignmentAction;
 use App\Filament\Actions\PrintHandoverAction;
 use App\Models\AssetAssignment;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -76,11 +77,13 @@ class AssetAssignmentsTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                ViewAction::make(),
-                CompleteAssignmentAction::make(),
-                PrintHandoverAction::make(),
-                EditAction::make()
-                    ->visible(fn (AssetAssignment $record): bool => $record->isEditable()),
+                ActionGroup::make([
+                    ViewAction::make(),
+                    CompleteAssignmentAction::make(),
+                    PrintHandoverAction::make(),
+                    EditAction::make()
+                        ->visible(fn (AssetAssignment $record): bool => $record->isEditable()),
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

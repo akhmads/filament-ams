@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use BezhanSalleh\FilamentShield\Facades\FilamentShield;
+use Filament\Tables\Enums\RecordActionsPosition;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\ServiceProvider;
@@ -21,5 +23,12 @@ class AppServiceProvider extends ServiceProvider
         Model::unguard(false);
 
         Carbon::setLocale(config('app.locale'));
+
+        // Row actions sit in the first column rather than the last, across every
+        // table. Set here rather than on each table so any table added later picks
+        // it up; each table groups its row actions into one dropdown.
+        Table::configureUsing(fn (Table $table) => $table->recordActionsPosition(
+            RecordActionsPosition::BeforeColumns,
+        ));
     }
 }

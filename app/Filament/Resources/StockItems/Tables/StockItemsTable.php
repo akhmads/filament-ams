@@ -5,6 +5,7 @@ namespace App\Filament\Resources\StockItems\Tables;
 use App\Enums\StockItemType;
 use App\Models\StockItem;
 use App\Support\Quantity;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -75,8 +76,10 @@ class StockItemsTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
+                ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make(),
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

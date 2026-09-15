@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Filament\Resources\Assets\AssetResource;
 use App\Models\Asset;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
@@ -54,10 +55,12 @@ class AttentionNeededTable extends TableWidget
                     ->placeholder('—'),
             ])
             ->recordActions([
-                Action::make('open')
-                    ->label('Open')
-                    ->icon('heroicon-m-arrow-top-right-on-square')
-                    ->url(fn (Asset $record): string => AssetResource::getUrl('view', ['record' => $record])),
+                ActionGroup::make([
+                    Action::make('open')
+                        ->label('Open')
+                        ->icon('heroicon-m-arrow-top-right-on-square')
+                        ->url(fn (Asset $record): string => AssetResource::getUrl('view', ['record' => $record])),
+                ]),
             ])
             ->paginated([5, 10, 25]);
     }

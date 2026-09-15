@@ -4,6 +4,7 @@ namespace App\Filament\Resources\MaintenancePlans\Tables;
 
 use App\Enums\MaintenanceIntervalUnit;
 use App\Models\MaintenancePlan;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -62,7 +63,9 @@ class MaintenancePlansTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                EditAction::make(),
+                ActionGroup::make([
+                    EditAction::make(),
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

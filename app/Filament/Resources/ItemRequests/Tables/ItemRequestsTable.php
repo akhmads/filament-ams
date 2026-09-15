@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ItemRequests\Tables;
 
 use App\Enums\ItemRequestStatus;
 use App\Models\ItemRequest;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -58,9 +59,11 @@ class ItemRequestsTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make()
-                    ->visible(fn (ItemRequest $record): bool => $record->isEditable()),
+                ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make()
+                        ->visible(fn (ItemRequest $record): bool => $record->isEditable()),
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

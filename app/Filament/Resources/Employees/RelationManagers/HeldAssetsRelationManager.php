@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Employees\RelationManagers;
 
 use App\Filament\Resources\Assets\AssetResource;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
@@ -52,10 +53,12 @@ class HeldAssetsRelationManager extends RelationManager
                     ->summarize(Sum::make()->money('IDR')->label('Total')),
             ])
             ->recordActions([
-                Action::make('open')
-                    ->label('Open')
-                    ->icon('heroicon-m-arrow-top-right-on-square')
-                    ->url(fn ($record): string => AssetResource::getUrl('view', ['record' => $record])),
+                ActionGroup::make([
+                    Action::make('open')
+                        ->label('Open')
+                        ->icon('heroicon-m-arrow-top-right-on-square')
+                        ->url(fn ($record): string => AssetResource::getUrl('view', ['record' => $record])),
+                ]),
             ]);
     }
 }

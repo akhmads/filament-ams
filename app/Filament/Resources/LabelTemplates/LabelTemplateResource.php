@@ -6,6 +6,7 @@ use App\Enums\LabelCodeType;
 use App\Filament\Resources\LabelTemplates\Pages\ManageLabelTemplates;
 use App\Models\LabelTemplate;
 use BackedEnum;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -133,8 +134,10 @@ class LabelTemplateResource extends Resource
                     ->boolean(),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
+                ActionGroup::make([
+                    EditAction::make(),
+                    DeleteAction::make(),
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

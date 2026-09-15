@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Assets\RelationManagers;
 
 use App\Filament\Resources\Assets\AssetResource;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -33,10 +34,12 @@ class ComponentsRelationManager extends RelationManager
                 TextColumn::make('acquisition_cost')->label('Value')->money('IDR'),
             ])
             ->recordActions([
-                Action::make('open')
-                    ->label('Open')
-                    ->icon('heroicon-m-arrow-top-right-on-square')
-                    ->url(fn ($record): string => AssetResource::getUrl('view', ['record' => $record])),
+                ActionGroup::make([
+                    Action::make('open')
+                        ->label('Open')
+                        ->icon('heroicon-m-arrow-top-right-on-square')
+                        ->url(fn ($record): string => AssetResource::getUrl('view', ['record' => $record])),
+                ]),
             ]);
     }
 

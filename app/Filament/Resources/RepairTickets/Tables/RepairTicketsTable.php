@@ -6,6 +6,7 @@ use App\Enums\RepairPriority;
 use App\Enums\RepairTicketStatus;
 use App\Enums\RepairType;
 use App\Models\RepairTicket;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -82,9 +83,11 @@ class RepairTicketsTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make()
-                    ->visible(fn (RepairTicket $record): bool => $record->isEditable()),
+                ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make()
+                        ->visible(fn (RepairTicket $record): bool => $record->isEditable()),
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

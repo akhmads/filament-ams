@@ -6,6 +6,7 @@ use App\Enums\DepreciationBook;
 use App\Enums\DepreciationPeriodStatus;
 use App\Filament\Actions\PostDepreciationAction;
 use App\Filament\Actions\RecalculateDepreciationAction;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -34,9 +35,11 @@ class DepreciationPeriodsTable
                 SelectFilter::make('status')->label('Status')->options(DepreciationPeriodStatus::class),
             ])
             ->recordActions([
-                ViewAction::make(),
-                RecalculateDepreciationAction::make(),
-                PostDepreciationAction::make(),
+                ActionGroup::make([
+                    ViewAction::make(),
+                    RecalculateDepreciationAction::make(),
+                    PostDepreciationAction::make(),
+                ]),
             ]);
     }
 }

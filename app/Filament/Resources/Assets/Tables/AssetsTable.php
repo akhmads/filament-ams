@@ -7,6 +7,7 @@ use App\Enums\AssetStatus;
 use App\Enums\PlacementType;
 use App\Filament\Actions\PrintAssetLabelsAction;
 use App\Filament\Actions\PrintAssetLabelsBulkAction;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -130,9 +131,11 @@ class AssetsTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
-                PrintAssetLabelsAction::make(),
+                ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make(),
+                    PrintAssetLabelsAction::make(),
+                ]),
             ])
             ->toolbarActions([
                 PrintAssetLabelsBulkAction::make(),

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\AssetDisposals\Tables;
 use App\Enums\AssetDisposalStatus;
 use App\Filament\Actions\PrintDisposalAction;
 use App\Models\AssetDisposal;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -52,10 +53,12 @@ class AssetDisposalsTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                ViewAction::make(),
-                PrintDisposalAction::make(),
-                EditAction::make()
-                    ->visible(fn (AssetDisposal $record): bool => $record->isEditable()),
+                ActionGroup::make([
+                    ViewAction::make(),
+                    PrintDisposalAction::make(),
+                    EditAction::make()
+                        ->visible(fn (AssetDisposal $record): bool => $record->isEditable()),
+                ]),
             ]);
     }
 }
