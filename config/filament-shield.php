@@ -260,6 +260,8 @@ return [
         // Writing stock up or down without goods changing hands is kept apart from
         // posting receipts, issues and transfers ("Update").
         'Post:StockAdjustment' => 'Post Stock Adjustments and Counts',
+        // Writing an asset off the books is signed off apart from proposing it ("Create").
+        'Approve:AssetDisposal' => 'Approve Asset Disposal',
     ],
 
     /*

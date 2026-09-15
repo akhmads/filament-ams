@@ -496,4 +496,37 @@ Aset pengganti sementara (loaner) · interval meter · ~~sparepart dari work ord
 - Migrasi sudah dijalankan di database dev. **Permission baru belum terbagi ke peran** — jalankan `php artisan db:seed --class=RoleSeeder` (menyinkronkan ulang permission keempat peran bawaan) atau `composer shield` lalu atur lewat Settings → Roles, agar StockItem, StockDocument, ItemRequest, `Approve:ItemRequest`, dan `Post:StockAdjustment` muncul.
 
 ### Berikutnya
-Penghapusan aset (disposal) + usul dari tiket "Cannot Be Repaired" · Audit/opname aset via scan QR · ekspor laporan stok & kartu stok · pengeluaran sebagian untuk permintaan barang · retur sparepart yang tidak terpakai · minimum stok per gudang.
+~~Penghapusan aset (disposal) + usul dari tiket "Cannot Be Repaired"~~ · Audit/opname aset via scan QR · ekspor laporan stok & kartu stok · pengeluaran sebagian untuk permintaan barang · retur sparepart yang tidak terpakai · minimum stok per gudang.
+
+---
+
+## 15. Fase 3 — Penghapusan Aset (selesai)
+
+### Keputusan
+| Topik | Keputusan |
+|---|---|
+| Approval | **Satu tingkat** — staff mengusulkan dan melaksanakan, pemegang `Approve:AssetDisposal` (asset_manager) menyetujui atau menolak |
+| Penyusutan bulan penghapusan | **Tidak disusutkan** — kebalikan dari bulan perolehan yang dihitung penuh. Penghapusan baru bisa diselesaikan bila penyusutan **kedua buku sudah diposting sampai bulan sebelumnya** |
+| Dokumen | **Satu dokumen, banyak aset** (seperti BAST); metode dan nilai jual per aset, laba/rugi per aset dan total |
+| Aset yang boleh dihapus | Berstatus Available, In Storage, Retired, atau Lost; tidak sedang dipegang karyawan; tidak ada di usulan penghapusan lain yang masih terbuka |
+
+### Yang sudah jalan
+- **Disposals** (grup navigasi Assets): nomor `DSP/YYMM/SEQ`, tanggal penghapusan, pembeli/penerima, nomor lelang/invoice, alasan, catatan, daftar aset dengan metode **Sold / Traded In / Donated / Scrapped / Lost** dan nilai jual (hanya Sold & Traded In). Alur `Waiting for Approval → Approved → Completed`, bisa **Rejected** (alasan wajib) atau **Cancelled** sebelum selesai. Hanya bisa diedit sebelum diputuskan.
+- **Complete Disposal** memproses semua aset sekaligus atau tidak sama sekali: menetapkan harga perolehan, akumulasi, **nilai buku, dan laba/rugi di buku komersial dan fiskal**, lalu mencatat movement `disposal` di ledger sehingga aset menjadi **Disposed** — sejak itu tidak lagi disusutkan. Tanggal penghapusan tidak boleh di masa depan.
+- Nilai buku = harga perolehan − akumulasi penyusutan **terposting** sebelum bulan penghapusan. Ditolak bila: masih ada bulan terjadwal sebelum bulan penghapusan yang belum diposting (pesan menyebut bulannya), atau aset sudah ikut diposting pada bulan penghapusan atau sesudahnya. Aset yang diperoleh di bulan penghapusan atau yang tidak disusutkan keluar pada harga perolehan. Aset tanpa kelompok fiskal: nilai buku fiskal = harga perolehan.
+- Sebelum selesai, daftar aset menampilkan **perkiraan nilai buku** dari penyusutan yang sudah diposting, agar approver bisa menilai.
+- **Berita Acara Penghapusan Aset** (PDF A4 landscape, Bahasa Indonesia): rincian per aset, jumlah, laba/(rugi) fiskal, tanda tangan pengusul, penyetuju, pelaksana; bertanda *DRAF* sebelum selesai.
+- Tombol **Propose Disposal** di halaman aset, dan di tiket repair berstatus *Cannot Be Repaired* — form terisi aset, metode Scrapped, alasan dari resolusi tiket, dan tautan balik ke tiket.
+- Tab **Disposal** di halaman aset: riwayat usulan penghapusan aset tersebut.
+- **Notifikasi**: usulan baru → pemegang `Approve:AssetDisposal`; keputusan → pengusul.
+- Hak akses: asset_staff kini menulis AssetDisposal (usul, batal, selesaikan) tanpa hak menyetujui.
+- **Tes**: 358 tes, 1.089 asersi (23 baru untuk penghapusan).
+
+### Catatan teknis
+- Transisi status aset: Available dan In Storage kini boleh langsung ke Disposed. `AssetMovementRecorder` tetap menolak setiap perpindahan aset Lost/Disposed, **kecuali** movement `disposal` dari Lost.
+- `DepreciationRunner::schedule()` dan `lastPostedMonth()` kini publik agar `DisposalValuation` memakai jadwal yang sama persis dengan posting bulanan.
+- Kolom hasil di `asset_disposal_lines` diisi sekali saat selesai dan tidak dihitung ulang, sehingga dokumen tetap sama walau data aset berubah kemudian.
+- Migrasi dan `RoleSeeder` sudah dijalankan di database dev (permission hanya bertambah; tidak ada yang dicabut).
+
+### Berikutnya
+Audit/opname aset via scan QR (terakhir di Fase 3) · jurnal penghapusan (debit akumulasi & rugi, kredit aset) untuk ekspor akuntansi · laporan penghapusan + laba/rugi per periode (Fase 4).

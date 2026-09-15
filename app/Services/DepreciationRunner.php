@@ -152,7 +152,7 @@ class DepreciationRunner
         }
     }
 
-    private function lastPostedMonth(DepreciationBook $book, bool $lock = false): ?CarbonImmutable
+    public function lastPostedMonth(DepreciationBook $book, bool $lock = false): ?CarbonImmutable
     {
         $query = DepreciationPeriod::query()
             ->where('book', $book)
@@ -188,9 +188,27 @@ class DepreciationRunner
      */
     private function scheduleRow(Asset $asset, DepreciationBook $book, CarbonImmutable $month, int $fiscalYearStartMonth): ?array
     {
+        foreach ($this->schedule($asset, $book, $fiscalYearStartMonth) as $row) {
+            if ($row['period'] === $month->toDateString()) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Every month the asset is depreciated in the book, with the accumulated amount
+     * after each. Empty when the asset falls outside that book.
+     *
+     * @return list<array{period: string, opening: int, amount: int, accumulated: int, closing: int, is_final: bool}>
+     */
+    public function schedule(Asset $asset, DepreciationBook $book, ?int $fiscalYearStartMonth = null): array
+    {
+        $fiscalYearStartMonth ??= (int) Setting::get('fiscal_year_start_month', 1);
         $cost = Money::toSen((string) $asset->acquisition_cost);
 
-        $schedule = match ($book) {
+        return match ($book) {
             DepreciationBook::Commercial => $this->calculator->schedule(
                 costSen: $cost,
                 residualSen: Money::toSen((string) $asset->residual_value),
@@ -201,14 +219,6 @@ class DepreciationRunner
             ),
             DepreciationBook::Fiscal => $this->fiscalSchedule($asset, $cost, $fiscalYearStartMonth),
         };
-
-        foreach ($schedule as $row) {
-            if ($row['period'] === $month->toDateString()) {
-                return $row;
-            }
-        }
-
-        return null;
     }
 
     /**

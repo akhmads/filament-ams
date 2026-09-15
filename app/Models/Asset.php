@@ -225,6 +225,23 @@ class Asset extends Model implements HasMedia
         return $this->warranty_end !== null && $this->warranty_end->isFuture();
     }
 
+    /** @return HasMany<AssetDisposalLine, $this> */
+    public function disposalLines(): HasMany
+    {
+        return $this->hasMany(AssetDisposalLine::class);
+    }
+
+    /**
+     * An asset can be put on a disposal proposal when it is out of use, nobody is
+     * holding it, and no other proposal for it is still open.
+     */
+    public function canBeProposedForDisposal(): bool
+    {
+        return $this->status->isDisposable()
+            && $this->current_employee_id === null
+            && ! $this->disposalLines()->whereHas('assetDisposal', fn (Builder $query) => $query->open())->exists();
+    }
+
     /**
      * An asset can only be handed over when its status allows it and nobody
      * else is holding it.

@@ -3,8 +3,10 @@
 namespace App\Filament\Resources\Assets\Pages;
 
 use App\Filament\Actions\PrintAssetLabelsAction;
+use App\Filament\Resources\AssetDisposals\AssetDisposalResource;
 use App\Filament\Resources\Assets\AssetResource;
 use App\Filament\Resources\RepairTickets\RepairTicketResource;
+use App\Models\AssetDisposal;
 use App\Models\RepairTicket;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -30,6 +32,13 @@ class ViewAsset extends ViewRecord
                 ->url(fn (): string => RepairTicketResource::getUrl('create', ['asset' => $this->record->getKey()]))
                 ->visible(fn (): bool => ! $this->record->status->isTerminal()
                     && (bool) Auth::user()?->can('create', RepairTicket::class)),
+            Action::make('proposeDisposal')
+                ->label('Propose Disposal')
+                ->icon('heroicon-o-archive-box-x-mark')
+                ->color('gray')
+                ->url(fn (): string => AssetDisposalResource::getUrl('create', ['asset' => $this->record->getKey()]))
+                ->visible(fn (): bool => $this->record->canBeProposedForDisposal()
+                    && (bool) Auth::user()?->can('create', AssetDisposal::class)),
             PrintAssetLabelsAction::make(),
             EditAction::make(),
         ];

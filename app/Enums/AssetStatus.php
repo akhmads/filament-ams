@@ -82,9 +82,9 @@ enum AssetStatus: string implements HasColor, HasIcon, HasLabel
     public function allowedTransitions(): array
     {
         return match ($this) {
-            self::Available => [self::InUse, self::InStorage, self::InTransit, self::UnderMaintenance, self::UnderRepair, self::Lost, self::Retired],
+            self::Available => [self::InUse, self::InStorage, self::InTransit, self::UnderMaintenance, self::UnderRepair, self::Lost, self::Retired, self::Disposed],
             self::InUse => [self::Available, self::InStorage, self::InTransit, self::UnderMaintenance, self::UnderRepair, self::Lost],
-            self::InStorage => [self::Available, self::InUse, self::InTransit, self::UnderMaintenance, self::UnderRepair, self::Lost, self::Retired],
+            self::InStorage => [self::Available, self::InUse, self::InTransit, self::UnderMaintenance, self::UnderRepair, self::Lost, self::Retired, self::Disposed],
             self::InTransit => [self::Available, self::InUse, self::InStorage, self::Lost],
             self::UnderMaintenance, self::UnderRepair => [self::Available, self::InStorage, self::InUse, self::Retired],
             self::Retired => [self::Disposed, self::InStorage],
@@ -96,5 +96,22 @@ enum AssetStatus: string implements HasColor, HasIcon, HasLabel
     public function canTransitionTo(self $status): bool
     {
         return $status === $this || in_array($status, $this->allowedTransitions(), strict: true);
+    }
+
+    /**
+     * An asset may only be written off when it is out of use: idle, in store,
+     * retired, or lost.
+     */
+    public function isDisposable(): bool
+    {
+        return in_array($this->value, self::disposableValues(), strict: true);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function disposableValues(): array
+    {
+        return [self::Available->value, self::InStorage->value, self::Retired->value, self::Lost->value];
     }
 }

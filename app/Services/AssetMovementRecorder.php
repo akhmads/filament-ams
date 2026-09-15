@@ -97,7 +97,10 @@ class AssetMovementRecorder
 
     private function guard(Asset $asset, Placement $to, MovementType $movementType): void
     {
-        if ($asset->status->isTerminal()) {
+        // A lost asset can still be written off; nothing else moves a lost or disposed asset.
+        $isWritingOffLostAsset = $movementType === MovementType::Disposal && $asset->status === AssetStatus::Lost;
+
+        if ($asset->status->isTerminal() && ! $isWritingOffLostAsset) {
             throw AssetTransitionException::terminal($asset);
         }
 
