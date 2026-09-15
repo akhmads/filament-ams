@@ -262,6 +262,8 @@ return [
         'Post:StockAdjustment' => 'Post Stock Adjustments and Counts',
         // Writing an asset off the books is signed off apart from proposing it ("Create").
         'Approve:AssetDisposal' => 'Approve Asset Disposal',
+        // Applying an audit's corrections to the register is kept apart from counting ("Update").
+        'Close:AssetAudit' => 'Close Asset Audit',
     ],
 
     /*

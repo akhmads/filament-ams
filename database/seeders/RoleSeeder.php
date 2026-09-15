@@ -32,7 +32,13 @@ class RoleSeeder extends Seeder
      * post stock adjustments and counts. They propose disposals and carry out the
      * approved ones, but do not approve them.
      */
-    private const STAFF_WRITABLE_SUBJECTS = ['Asset', 'AssetAssignment', 'WorkOrder', 'RepairTicket', 'StockItem', 'StockDocument', 'ItemRequest', 'AssetDisposal'];
+    private const STAFF_WRITABLE_SUBJECTS = ['Asset', 'AssetAssignment', 'WorkOrder', 'RepairTicket', 'StockItem', 'StockDocument', 'ItemRequest', 'AssetDisposal', 'AssetAudit'];
+
+    /**
+     * Auditors read everything but also carry out asset audits. Applying an audit's
+     * corrections stays with the close permission.
+     */
+    private const AUDITOR_WRITABLE_SUBJECTS = ['AssetAudit'];
 
     /**
      * The permission list comes from code rather than data, so scanning the
@@ -72,8 +78,18 @@ class RoleSeeder extends Seeder
             ->all());
 
         $this->sync('auditor', $permissions
-            ->filter(fn (string $name): bool => in_array($this->action($name), self::READ_ACTIONS, strict: true)
-                && ! in_array($this->subject($name), self::ADMIN_ONLY_SUBJECTS, strict: true))
+            ->filter(function (string $name): bool {
+                $action = $this->action($name);
+                $subject = $this->subject($name);
+
+                if (in_array($subject, self::ADMIN_ONLY_SUBJECTS, strict: true)) {
+                    return false;
+                }
+
+                return in_array($subject, self::AUDITOR_WRITABLE_SUBJECTS, strict: true)
+                    ? in_array($action, self::OPERATIONAL_ACTIONS, strict: true)
+                    : in_array($action, self::READ_ACTIONS, strict: true);
+            })
             ->all());
     }
 

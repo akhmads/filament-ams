@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Filament\Pages\ManageSettings;
 use App\Filament\Resources\AssetAssignments\AssetAssignmentResource;
+use App\Filament\Resources\AssetAudits\AssetAuditResource;
 use App\Filament\Resources\AssetCategories\AssetCategoryResource;
 use App\Filament\Resources\AssetDisposals\AssetDisposalResource;
 use App\Filament\Resources\AssetModels\AssetModelResource;
@@ -61,6 +62,7 @@ class AdminPanelTest extends TestCase
             'assets' => [AssetResource::class],
             'handovers' => [AssetAssignmentResource::class],
             'asset disposals' => [AssetDisposalResource::class],
+            'asset audits' => [AssetAuditResource::class],
             'asset categories' => [AssetCategoryResource::class],
             'locations' => [LocationResource::class],
             'employees' => [EmployeeResource::class],

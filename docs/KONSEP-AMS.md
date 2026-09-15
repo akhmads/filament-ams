@@ -529,4 +529,35 @@ Aset pengganti sementara (loaner) · interval meter · ~~sparepart dari work ord
 - Migrasi dan `RoleSeeder` sudah dijalankan di database dev (permission hanya bertambah; tidak ada yang dicabut).
 
 ### Berikutnya
-Audit/opname aset via scan QR (terakhir di Fase 3) · jurnal penghapusan (debit akumulasi & rugi, kredit aset) untuk ekspor akuntansi · laporan penghapusan + laba/rugi per periode (Fase 4).
+~~Audit/opname aset via scan QR (terakhir di Fase 3)~~ · jurnal penghapusan (debit akumulasi & rugi, kredit aset) untuk ekspor akuntansi · laporan penghapusan + laba/rugi per periode (Fase 4).
+
+---
+
+## 16. Fase 3 — Audit / Opname Aset (selesai — Fase 3 tuntas)
+
+### Keputusan
+| Topik | Keputusan |
+|---|---|
+| Cara scan | **Tanpa dependensi baru** — satu kolom kode di halaman scan (scanner gun Code128, ketik manual). Saat petugas sudah memilih ruangan di halaman scan, membuka QR label `/a/{kode}` dengan kamera bawaan HP langsung mencatat aset ke audit itu |
+| Tindak lanjut selisih | **Dipilih per temuan** oleh pemeriksa: pindahkan ke lokasi temuan, perbarui kondisi, atau tandai hilang — diterapkan sebagai movement *Audit Adjustment* |
+| Peran | Auditor & asset_staff membuat sesi dan memindai; menerapkan tindak lanjut & menutup audit butuh `Close:AssetAudit` (asset_manager) |
+
+### Yang sudah jalan
+- **Asset Audits** (grup Assets): nomor `AUD/YYMM/SEQ`, judul, cakupan **lokasi (termasuk semua ruangan di bawahnya)** dan/atau **departemen (termasuk aset yang dipegang karyawannya)**, opsional kategori (termasuk subkategori). Saat dibuat, daftar aset yang diharapkan diambil dari register saat itu (aset Disposed/Lost tidak ikut) dan cakupan tidak bisa diubah lagi.
+- Alur `Counting → Under Review → Completed`, bisa **Cancelled** sebelum ditutup (register tidak berubah).
+- **Halaman Scan** (ramah HP): pilih ruangan/gudang (dibatasi ke cakupan lokasi), kondisi opsional ("As recorded"), lalu kode. Hasil langsung: *Found*, *Wrong Location* (ditemukan di ruangan lain dari catatan), atau *Not on the list* (aset di luar daftar ikut ditambahkan). Scan ulang menggantikan scan sebelumnya. Kode tak dikenal dan aset yang sudah dihapus ditolak. Daftar "Scanned So Far" dan ringkasan progres di atas halaman.
+- **Finish Counting**: aset yang belum di-scan menjadi **Missing**; usulan otomatis — aset salah lokasi dipindahkan dan kondisi yang berubah diperbarui — sedangkan **tandai hilang tidak pernah otomatis**.
+- **Peninjauan**: tab Assets di halaman audit berisi hasil per aset dengan toggle *Move*, *Update Condition*, *Mark Lost* (hanya aktif bila cocok dengan temuannya dan hanya bagi pemegang `Close:AssetAudit`), filter *Findings only*.
+- **Apply & Close**: semua koreksi diterapkan sekaligus atau tidak sama sekali, lewat `AssetMovementRecorder` (movement `audit_adjustment` dengan referensi ke audit). Status aset dipertahankan kecuali pindah antara ruangan dan gudang. **Aset yang sudah berpindah setelah di-scan tidak dikoreksi** — penutupan ditolak dengan nama asetnya, agar koreksi dari pengamatan lama tidak membatalkan perpindahan yang sah.
+- **Berita Acara Hasil Audit Aset** (PDF A4 landscape, Bahasa Indonesia): cakupan, ringkasan (terdaftar, ditemukan, salah lokasi, tidak ditemukan, kondisi berubah, di luar daftar), tabel temuan dengan tindak lanjutnya (bertanda *usulan* sebelum ditutup), tanda tangan petugas & pemeriksa; *DRAF* sebelum selesai.
+- `RoleSeeder`: auditor kini boleh membuat & mengerjakan AssetAudit (subjek lain tetap baca saja); asset_staff juga.
+- **Tes**: 382 tes, 1.172 asersi (24 baru untuk audit).
+
+### Catatan teknis
+- Ruangan yang dipilih di halaman scan disimpan di session (`asset_audit_scan`); `AssetLookupController` hanya mencatat scan bila user login, audit masih *Counting*, dan user berhak `update` audit itu — selain itu QR tetap membuka halaman aset seperti biasa.
+- Deteksi "sudah berpindah" memakai `created_at` movement, bukan `moved_at`, karena serah terima memakai tanggal dokumen (tengah malam) yang bisa lebih awal dari jam scan.
+- Aset yang dipegang karyawan tidak punya ruangan tercatat, sehingga di-scan di ruangan mana pun dihitung *Found*.
+- Foto kondisi saat scan belum ada.
+
+### Berikutnya (Fase 4)
+Portal karyawan · laporan & ekspor lengkap (termasuk kartu stok, penghapusan, hasil audit) · widget aset belum diaudit, TCO, MTTR/MTBF · foto kondisi saat audit · notifikasi email/WhatsApp · backup terjadwal.
