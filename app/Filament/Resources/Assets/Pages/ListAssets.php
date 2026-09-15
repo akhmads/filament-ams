@@ -3,10 +3,16 @@
 namespace App\Filament\Resources\Assets\Pages;
 
 use App\Enums\AssetStatus;
+use App\Filament\Actions\ImportAction;
+use App\Filament\Exports\AssetExporter;
+use App\Filament\Imports\AssetImporter;
 use App\Filament\Resources\Assets\AssetResource;
+use App\Models\Asset;
 use Filament\Actions\CreateAction;
+use Filament\Actions\ExportAction;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Builder;
 
 class ListAssets extends ListRecords
@@ -16,6 +22,18 @@ class ListAssets extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            ImportAction::make()
+                ->label('Import')
+                ->icon(Heroicon::OutlinedArrowUpTray)
+                ->color('gray')
+                ->importer(AssetImporter::class)
+                // Registering assets from a file is the create power, in quantity.
+                ->visible(fn (): bool => (bool) auth()->user()?->can('create', Asset::class)),
+            ExportAction::make()
+                ->label('Export')
+                ->icon(Heroicon::OutlinedArrowDownTray)
+                ->color('gray')
+                ->exporter(AssetExporter::class),
             CreateAction::make()->label('New Asset'),
         ];
     }

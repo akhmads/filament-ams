@@ -559,5 +559,32 @@ Aset pengganti sementara (loaner) · interval meter · ~~sparepart dari work ord
 - Aset yang dipegang karyawan tidak punya ruangan tercatat, sehingga di-scan di ruangan mana pun dihitung *Found*.
 - Foto kondisi saat scan belum ada.
 
+---
+
+## 17. Import & Export Aset
+
+### Keputusan
+| Topik | Keputusan |
+|---|---|
+| Mekanisme | **Seperti lastmile** — Importer/Exporter Filament lewat queue, dengan `ImportAction` yang juga membaca XLSX/ODS, hanya mengenali pemisah koma atau titik koma, dan opsi *tolak seluruh file bila ada baris gagal* |
+| Aset yang sudah ada | **Import hanya menambah aset baru**. Baris berisi kode aset ditolak; perubahan posisi, status, dan nilai tetap lewat dokumennya masing-masing |
+
+### Yang sudah jalan
+- Tombol **Import** (untuk pemegang `Create:Asset`) dan **Export** di daftar aset.
+- **Export**: CSV/XLSX mengikuti filter tabel. Header sama dengan kolom import, dan master data ditulis sebagai kode yang dicari importer — export dengan kolom `code` dikosongkan langsung menjadi template import. Nominal ditulis sebagai angka di XLSX; nama kategori dan posisi tersedia sebagai kolom opsional.
+- **Import** per baris:
+  - Wajib: nama, kategori, cabang, tanggal & harga perolehan, serta **salah satu** ruangan/gudang (kode atau nama, di cabang aset) atau nomor karyawan pemegang.
+  - Master dicocokkan lewat kode lalu nama tanpa peduli huruf besar/kecil; nama yang cocok ke lebih dari satu data ditolak dan meminta kode. Master yang tidak ada tidak dibuat.
+  - Kode aset dibuat otomatis seperti di form, dan **movement awal dicatat di ledger**; kode, simpan, dan movement dalam satu transaksi.
+  - Kosong berarti default: status *in_use* bila di ruangan/karyawan atau *available* bila di gudang; kondisi *good*; metode, masa manfaat, dan metode fiskal mengikuti kategori; tanggal mulai susut = tanggal perolehan; departemen mengikuti karyawan pemegang.
+  - Status awal hanya *available, in_storage, in_use, retired*. Tanggal hanya dibaca sebagai `YYYY-MM-DD` (atau sel tanggal di Excel) — `03/04/2026` ditolak karena ambigu. Tanggal perolehan tidak boleh di masa depan.
+- Opsi **Reject the whole file if any row fails** (default aktif): seluruh baris diperiksa lebih dulu tanpa menulis apa pun; bila ada yang gagal, file dikembalikan dengan daftar barisnya. Dilepas, baris yang baik masuk dan baris gagal bisa diunduh setelah selesai.
+- **Tes**: 398 tes, 1.226 asersi (16 baru untuk import/export).
+
+### Catatan teknis
+- **Butuh queue worker.** `php artisan dev` sudah menjalankan `queue:listen`; di server jalankan `php artisan queue:work` lewat supervisor. Tanpa worker, import/export hanya menunggu dan notifikasi selesai tidak pernah datang.
+- Tabel `imports`, `exports`, `failed_import_rows` dari Filament (`vendor:publish --tag=filament-actions-migrations`); `job_batches` sudah ada.
+- Port dari lastmile: `App\Filament\Actions\ImportAction`, `App\Support\Spreadsheet`, `App\Support\ImportPreflight`, `App\Support\Search`, kontrak `ValidatesFileUpFront` + `ValidatesRowsUpFront`, `NumberExportColumn` + `HasNumberExportColumns`. Modul lain tinggal menambah Importer/Exporter-nya sendiri.
+
 ### Berikutnya (Fase 4)
 Portal karyawan · laporan & ekspor lengkap (termasuk kartu stok, penghapusan, hasil audit) · widget aset belum diaudit, TCO, MTTR/MTBF · foto kondisi saat audit · notifikasi email/WhatsApp · backup terjadwal.
