@@ -10,6 +10,7 @@ use App\Filament\Resources\RepairTickets\Pages\ViewRepairTicket;
 use App\Filament\Resources\RepairTickets\Schemas\RepairTicketForm;
 use App\Filament\Resources\RepairTickets\Schemas\RepairTicketInfolist;
 use App\Filament\Resources\RepairTickets\Tables\RepairTicketsTable;
+use App\Filament\Resources\WorkOrders\RelationManagers\SparePartsRelationManager;
 use App\Models\RepairTicket;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -66,6 +67,13 @@ class RepairTicketResource extends Resource
     public static function table(Table $table): Table
     {
         return RepairTicketsTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            SparePartsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

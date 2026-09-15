@@ -39,4 +39,28 @@ final class Money
 
         return sprintf('%s%d.%02d', $sign, intdiv($sen, 100), $sen % 100);
     }
+
+    /**
+     * $sen × $part ÷ $whole, rounded half away from zero — e.g. the value of part
+     * of a stock quantity at its average cost. Splitting the division keeps large
+     * stock values from overflowing an integer.
+     */
+    public static function share(int $sen, int $part, int $whole): int
+    {
+        if ($whole <= 0 || $part < 0) {
+            throw new InvalidArgumentException('A share needs a positive whole and a part that is not negative.');
+        }
+
+        $sign = $sen < 0 ? -1 : 1;
+        $sen = abs($sen);
+
+        $remainder = ($sen % $whole) * $part;
+        $result = intdiv($sen, $whole) * $part + intdiv($remainder, $whole);
+
+        if (($remainder % $whole) * 2 >= $whole) {
+            $result++;
+        }
+
+        return $sign * $result;
+    }
 }

@@ -458,4 +458,42 @@ Sumber: [UU 36/2008 — pajak.go.id](https://www.pajak.go.id/sites/default/files
 - Setelah deploy jalankan `php artisan migrate` dan `RoleSeeder` agar permission `RepairTicket` dan `Approve:RepairTicket` terbentuk dan terbagi ke peran.
 
 ### Berikutnya
-Aset pengganti sementara (loaner) · interval meter · sparepart dari work order/repair ke stok (Fase 3) · usul penghapusan dari tiket "Cannot Be Repaired" (Fase 3) · MTTR/MTBF (Fase 4).
+Aset pengganti sementara (loaner) · interval meter · ~~sparepart dari work order/repair ke stok (Fase 3)~~ · usul penghapusan dari tiket "Cannot Be Repaired" (Fase 3) · MTTR/MTBF (Fase 4).
+
+---
+
+## 14. Fase 3 — Stok, Sparepart & Permintaan Barang (selesai)
+
+### Keputusan
+| Topik | Keputusan |
+|---|---|
+| Urutan Fase 3 | **Stok dulu**, lalu penghapusan aset, lalu audit/opname aset |
+| Gudang | Lokasi bertipe **Warehouse** yang sudah ada — tidak ada master gudang kedua. Saldo dicatat per item per gudang |
+| Valuasi | **Moving average per gudang**. Saldo menyimpan *total nilai*, bukan harga satuan: barang keluar membawa bagian proporsionalnya, dan unit terakhir membawa sisa nilai sehingga tidak ada rupiah yang tertinggal di gudang kosong karena pembulatan |
+| Permintaan barang | Karyawan tidak punya akun, jadi **staff mencatat atas nama karyawan**; pemegang `Approve:ItemRequest` menyetujui; barang dikeluarkan dari satu gudang |
+| Stok minimum | Satu angka per item, dijumlah dari semua gudang |
+| Stok negatif | Ditolak — posting yang melebihi stok gagal seluruhnya |
+
+### Yang sudah jalan
+- **Stock Items** (grup navigasi Inventory): kode, nama, jenis (Consumable / Spare Part), satuan, stok minimum, jumlah pembelian ulang, aktif. Daftar menampilkan stok & nilai total; tab **Below Minimum** dan badge navigasi. Halaman item berisi saldo **per gudang** (dengan harga rata-rata) dan **Stock Card** — setiap mutasi dengan saldo berjalan.
+- **Stock Transactions** — lima jenis dokumen bernomor sendiri: Goods Receipt `RCV/`, Goods Issue `ISS/`, Transfer `TRF/`, Adjustment `ADJ/`, Stock Count `OPN/`. Disimpan sebagai **draft** (tidak mengubah stok), lalu **Post**. Posting mengunci dokumen dan saldo dengan row lock; satu baris gagal membatalkan seluruh dokumen. Dokumen terposting tidak bisa diedit atau dihapus — koreksi lewat Adjustment.
+- **Adjustment & Stock Count butuh permission khusus `Post:StockAdjustment`** (menulis stok naik/turun tanpa barang berpindah tangan adalah celah menutupi kehilangan). asset_staff bisa membuat draft-nya, asset_manager yang memposting.
+- **Stock Count**: selisih dihitung terhadap stok **saat diposting**, bukan saat diinput; baris menyimpan stok sistem saat itu. Hitungan yang sama dengan stok tidak mencatat mutasi.
+- Stok masuk tanpa harga beli (Adjustment +, kelebihan hasil hitung) dinilai pada harga rata-rata gudang itu, atau **harga beli terakhir** item bila gudang sedang kosong.
+- Transfer: barang tiba di gudang tujuan membawa nilai yang sama saat keluar dari gudang asal.
+- **Sparepart dari work order & repair**: tab **Spare Parts** di work order (In Progress) dan tiket repair (In Repair) → tombol **Use Spare Parts** membuat dan langsung memposting Goods Issue yang bersumber dari WO/tiket tersebut. Infolist menampilkan **Spare Parts Used**. *Actual Cost* tetap untuk jasa/vendor; biaya sparepart dihitung terpisah dari nilai stok yang keluar.
+- **Item Requests**: `REQ/YYMM/SEQ`, karyawan peminta, departemen, tanggal dibutuhkan, tujuan, daftar barang. Alur `Waiting for Approval → Approved → Issued`, bisa **Rejected** (alasan wajib) atau **Cancelled** sebelum dikeluarkan. **Issue Items** memilih gudang dan mengeluarkan seluruh permintaan sekaligus; bila gudang tidak mencukupi, tidak ada yang dikeluarkan dan permintaan tetap Approved. Hanya bisa diedit sebelum diputuskan.
+- **Notifikasi**: permintaan baru → pemegang `Approve:ItemRequest`; keputusan → pencatat permintaan; item turun di bawah minimum → pemegang `Create:StockDocument`, **sekali saat melewati batas** (item yang sudah kurang tidak diberitahukan ulang). Pemosting ikut diberi tahu karena ini akibat, bukan keputusan.
+- Widget dashboard **Low Stock**: item di bawah minimum dengan **Suggested Purchase** (jumlah pembelian ulang, atau kekurangannya bila tidak diisi).
+- `RoleSeeder`: asset_staff kini menulis StockItem, StockDocument, ItemRequest; tidak menyetujui permintaan dan tidak memposting adjustment/count. Auditor hanya melihat.
+- **Tes**: 335 tes, 1.008 asersi (52 baru untuk stok, sparepart, permintaan barang, `Quantity`, `Money::share`).
+
+### Catatan teknis
+- Kuantitas `decimal(18,2)` dihitung sebagai **perseratus bilangan bulat** lewat `App\Support\Quantity`, sejajar dengan `Money` untuk rupiah. `Money::share($sen, $bagian, $keseluruhan)` membagi proporsional dengan pembulatan setengah menjauhi nol, dipecah agar nilai stok besar tidak overflow integer.
+- `stock_balances` adalah cache dari `stock_movements` (append-only), sama seperti `assets.current_*` terhadap `asset_movements`. Satu-satunya penulisnya `StockLedger`.
+- Baris saldo dibuat dengan `createOrFirst` lalu dibaca ulang dengan `lockForUpdate`, sehingga dua posting bersamaan untuk item & gudang baru tidak saling tabrak.
+- Dokumen sparepart dan permintaan barang memakai kolom polimorfik `source` di `stock_documents`; relasi `sparePartLines` (trait `UsesSpareParts`) dipakai WorkOrder dan RepairTicket.
+- Migrasi sudah dijalankan di database dev. **Permission baru belum terbagi ke peran** — jalankan `php artisan db:seed --class=RoleSeeder` (menyinkronkan ulang permission keempat peran bawaan) atau `composer shield` lalu atur lewat Settings → Roles, agar StockItem, StockDocument, ItemRequest, `Approve:ItemRequest`, dan `Post:StockAdjustment` muncul.
+
+### Berikutnya
+Penghapusan aset (disposal) + usul dari tiket "Cannot Be Repaired" · Audit/opname aset via scan QR · ekspor laporan stok & kartu stok · pengeluaran sebagian untuk permintaan barang · retur sparepart yang tidak terpakai · minimum stok per gudang.

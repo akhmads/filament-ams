@@ -11,10 +11,13 @@ use App\Filament\Resources\Branches\BranchResource;
 use App\Filament\Resources\Brands\BrandResource;
 use App\Filament\Resources\Departments\DepartmentResource;
 use App\Filament\Resources\Employees\EmployeeResource;
+use App\Filament\Resources\ItemRequests\ItemRequestResource;
 use App\Filament\Resources\LabelTemplates\LabelTemplateResource;
 use App\Filament\Resources\Locations\LocationResource;
 use App\Filament\Resources\MaintenancePlans\MaintenancePlanResource;
 use App\Filament\Resources\RepairTickets\RepairTicketResource;
+use App\Filament\Resources\StockDocuments\StockDocumentResource;
+use App\Filament\Resources\StockItems\StockItemResource;
 use App\Filament\Resources\Suppliers\SupplierResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Filament\Resources\WorkOrders\WorkOrderResource;
@@ -68,6 +71,9 @@ class AdminPanelTest extends TestCase
             'maintenance plans' => [MaintenancePlanResource::class],
             'work orders' => [WorkOrderResource::class],
             'repair tickets' => [RepairTicketResource::class],
+            'stock items' => [StockItemResource::class],
+            'stock documents' => [StockDocumentResource::class],
+            'item requests' => [ItemRequestResource::class],
             'users' => [UserResource::class],
         ];
     }

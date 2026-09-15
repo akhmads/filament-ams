@@ -255,6 +255,11 @@ return [
     'custom_permissions' => [
         // Signing off a repair's cost is kept apart from carrying it out ("Update").
         'Approve:RepairTicket' => 'Approve Repair Ticket',
+        // Approving an item request is kept apart from recording it ("Create").
+        'Approve:ItemRequest' => 'Approve Item Request',
+        // Writing stock up or down without goods changing hands is kept apart from
+        // posting receipts, issues and transfers ("Update").
+        'Post:StockAdjustment' => 'Post Stock Adjustments and Counts',
     ],
 
     /*

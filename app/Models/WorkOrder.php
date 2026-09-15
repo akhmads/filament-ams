@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\WorkOrderResult;
 use App\Enums\WorkOrderStatus;
+use App\Models\Concerns\UsesSpareParts;
 use App\Services\WorkOrderService;
 use Database\Factories\WorkOrderFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,7 +23,7 @@ use Spatie\Activitylog\Support\LogOptions;
 class WorkOrder extends Model
 {
     /** @use HasFactory<WorkOrderFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, LogsActivity, SoftDeletes, UsesSpareParts;
 
     /**
      * Mirrored from the column defaults so a new work order reads correctly before it is saved.

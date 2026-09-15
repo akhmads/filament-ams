@@ -6,6 +6,7 @@ use App\Filament\Widgets\AssetsByCategoryChart;
 use App\Filament\Widgets\AssetsByStatusChart;
 use App\Filament\Widgets\AssetStatsOverview;
 use App\Filament\Widgets\AttentionNeededTable;
+use App\Filament\Widgets\LowStockTable;
 use App\Filament\Widgets\MaintenanceStatsOverview;
 use App\Support\Appearance;
 use App\Support\Theme;
@@ -58,6 +59,7 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('Assets'),
                 NavigationGroup::make('Depreciation'),
                 NavigationGroup::make('Maintenance'),
+                NavigationGroup::make('Inventory'),
                 NavigationGroup::make('Master Data')->collapsed(),
                 NavigationGroup::make('Settings')->collapsed(),
             ])
@@ -74,6 +76,7 @@ class AdminPanelProvider extends PanelProvider
                 AssetsByCategoryChart::class,
                 AttentionNeededTable::class,
                 MaintenanceStatsOverview::class,
+                LowStockTable::class,
             ])
             ->plugins([
                 // Roles sit with Users under Settings instead of Shield's own group.

@@ -7,6 +7,7 @@ use App\Filament\Resources\WorkOrders\Pages\EditWorkOrder;
 use App\Filament\Resources\WorkOrders\Pages\ListWorkOrders;
 use App\Filament\Resources\WorkOrders\Pages\ViewWorkOrder;
 use App\Filament\Resources\WorkOrders\RelationManagers\ChecklistItemsRelationManager;
+use App\Filament\Resources\WorkOrders\RelationManagers\SparePartsRelationManager;
 use App\Filament\Resources\WorkOrders\Schemas\WorkOrderForm;
 use App\Filament\Resources\WorkOrders\Schemas\WorkOrderInfolist;
 use App\Filament\Resources\WorkOrders\Tables\WorkOrdersTable;
@@ -72,6 +73,7 @@ class WorkOrderResource extends Resource
     {
         return [
             ChecklistItemsRelationManager::class,
+            SparePartsRelationManager::class,
         ];
     }
 

@@ -70,7 +70,10 @@ class RepairTicketInfolist
                                 ->state(fn (RepairTicket $record): ?string => self::duration($record->downtimeMinutes())),
                             TextEntry::make('completedBy.name')->label('Finished By')->placeholder('—'),
                             TextEntry::make('actual_cost')->label('Actual Cost')->money('IDR')->placeholder('—'),
-                            TextEntry::make('resolution')->label('Resolution')->placeholder('—')->columnSpan(3),
+                            TextEntry::make('spare_parts_cost')->label('Spare Parts Used')
+                                ->state(fn (RepairTicket $record): float => (float) $record->sparePartsCost())
+                                ->money('IDR'),
+                            TextEntry::make('resolution')->label('Resolution')->placeholder('—')->columnSpan(2),
                         ]),
                     ]),
                 Section::make('Rejection')

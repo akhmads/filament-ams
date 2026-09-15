@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\RepairPriority;
 use App\Enums\RepairTicketStatus;
 use App\Enums\RepairType;
+use App\Models\Concerns\UsesSpareParts;
 use App\Services\RepairTicketService;
 use Database\Factories\RepairTicketFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,7 +25,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 class RepairTicket extends Model implements HasMedia
 {
     /** @use HasFactory<RepairTicketFactory> */
-    use HasFactory, InteractsWithMedia, LogsActivity, SoftDeletes;
+    use HasFactory, InteractsWithMedia, LogsActivity, SoftDeletes, UsesSpareParts;
 
     /**
      * Mirrored from the column defaults so a new ticket reads correctly before it is saved.

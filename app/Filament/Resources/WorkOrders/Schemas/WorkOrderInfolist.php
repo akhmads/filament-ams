@@ -33,6 +33,9 @@ class WorkOrderInfolist
                             TextEntry::make('assignedTo.name')->label('Technician')->placeholder('Unassigned'),
                             TextEntry::make('supplier.name')->label('Service Vendor')->placeholder('—'),
                             TextEntry::make('estimated_cost')->label('Estimated Cost')->money('IDR'),
+                            TextEntry::make('spare_parts_cost')->label('Spare Parts Used')
+                                ->state(fn (WorkOrder $record): float => (float) $record->sparePartsCost())
+                                ->money('IDR'),
                             TextEntry::make('estimated_minutes')->label('Estimated Duration')->suffix(' minutes')->placeholder('—'),
                             TextEntry::make('started_at')->label('Started')->dateTime('d M Y H:i')->placeholder('Not started'),
                             TextEntry::make('instructions')->label('Instructions')->placeholder('—')->columnSpanFull(),

@@ -27,9 +27,11 @@ class RoleSeeder extends Seeder
 
     /**
      * Subjects asset staff may create and edit. Staff carry out work orders and
-     * repairs but do not plan maintenance or approve a repair's cost.
+     * repairs but do not plan maintenance or approve a repair's cost. They keep
+     * the warehouse and record item requests, but neither approve a request nor
+     * post stock adjustments and counts.
      */
-    private const STAFF_WRITABLE_SUBJECTS = ['Asset', 'AssetAssignment', 'WorkOrder', 'RepairTicket'];
+    private const STAFF_WRITABLE_SUBJECTS = ['Asset', 'AssetAssignment', 'WorkOrder', 'RepairTicket', 'StockItem', 'StockDocument', 'ItemRequest'];
 
     /**
      * The permission list comes from code rather than data, so scanning the
